@@ -140,7 +140,7 @@ const CollectionSelector = () => {
   return (
     <div className='flex flex-col'>
       {/* Modern Toggle-Style Unit Selector */}
-      <div className='flex rounded-tl-2xl rounded-tr-2xl bg-[var(--card-color)] border-b-1 border-[var(--border-color)] p-4 gap-2 flex-col md:flex-row'>
+      <div className='flex rounded-tl-2xl rounded-tr-2xl bg-[var(--card-color)] border-b-1 border-[var(--border-color)] p-4 gap-4 flex-col md:flex-row'>
         {collections.map(collection => {
           const isSelected = collection.name === selectedCollection;
 
@@ -213,7 +213,7 @@ const CollectionSelector = () => {
         <button
           className={clsx(
             'py-3 px-16 w-full',
-            'rounded-xl duration-275 hover:cursor-pointer bg-[var(--secondary-color)]/80 border-b-8 border-[var(--secondary-color-accent)] text-[var(--background-color)]',
+            'rounded-2xl duration-275 hover:cursor-pointer bg-[var(--secondary-color)]/80 border-b-8 border-[var(--secondary-color-accent)] text-[var(--background-color)]',
             'flex justify-center'
           )}
           onClick={handleClear}

@@ -60,7 +60,7 @@ const GameModes = () => {
   const gameModes = ['Pick', 'Anti-Pick', 'Type'];
 
   return (
-    <div className='flex rounded-2xl bg-[var(--card-color)]  border-[var(--border-color)] p-1.5 gap-1.5 flex-col md:flex-row'>
+    <div className='flex rounded-2xl bg-[var(--card-color)]  border-[var(--border-color)] p-4 gap-4 flex-col md:flex-row'>
       {gameModes.map(gameMode => {
         const isSelected = gameMode === selectedGameMode;
 

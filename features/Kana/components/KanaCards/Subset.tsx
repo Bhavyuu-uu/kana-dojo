@@ -139,7 +139,7 @@ const Subset = ({ sliceRange, subgroup }: SubsetProps) => {
           type='button'
           className={clsx(
             'p-2 font-normal text-lg w-full hover:cursor-pointer',
-            'rounded-xl bg-[var(--main-color)] text-[var(--background-color)]',
+            'rounded-2xl bg-[var(--main-color)] text-[var(--background-color)]',
             'flex flex-row justify-center items-center gap-1.5',
             'border-b-6 border-[var(--main-color-accent)]'
             // 'border-r-3 border-l-3 border-t-2'

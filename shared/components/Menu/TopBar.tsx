@@ -193,7 +193,7 @@ const TopBar: React.FC<ITopBarProps> = ({ currentDojo }: ITopBarProps) => {
           >
             <div
               className={clsx(
-                'flex flex-row items-center justify-center gap-3',
+                'flex flex-row items-center justify-center gap-4 md:gap-8',
                 'w-full max-w-4xl mx-auto'
               )}
             >
@@ -205,7 +205,7 @@ const TopBar: React.FC<ITopBarProps> = ({ currentDojo }: ITopBarProps) => {
                 >
                   <button
                     className={clsx(
-                      'w-full h-12 px-4 flex flex-row justify-center items-center gap-2',
+                      'w-full h-12 px-6 flex flex-row justify-center items-center gap-2',
                       'bg-[var(--secondary-color)] text-[var(--background-color)]',
                       'rounded-2xl transition-colors duration-200',
                       'border-b-6 border-[var(--secondary-color-accent)] shadow-sm',
