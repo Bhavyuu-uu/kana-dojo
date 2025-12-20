@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef, memo } from 'react';
 import themeSets from '@/features/Preferences/data/themes';
 import { useClick } from '@/shared/hooks/useAudio';
 import clsx from 'clsx';
@@ -72,7 +72,6 @@ const calculateVisibleCount = (interactive: boolean): number => {
 
   const { cols, cellSize, gap } = config;
   const viewHeight = window.innerHeight;
-  const viewWidth = window.innerWidth;
 
   // Calculate rows that fit in viewport
   const effectiveHeight = viewHeight - 16; // padding
@@ -199,7 +198,108 @@ const precomputeStyles = async (
 };
 
 // ============================================================================
-// COMPONENT
+// INTERACTIVE CHARACTER COMPONENT
+// Each manages its own animation state - prevents parent re-renders
+// ============================================================================
+
+interface InteractiveCharProps {
+  style: CharacterStyle;
+  onExplode: () => void;
+}
+
+const InteractiveChar = memo(({ style, onExplode }: InteractiveCharProps) => {
+  const [animState, setAnimState] = useState<AnimState>('idle');
+  const isAnimating = useRef(false);
+
+  const handleClick = useCallback(() => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
+    onExplode();
+
+    setAnimState('exploding');
+
+    // Animation state transitions - all self-contained
+    setTimeout(() => {
+      setAnimState('hidden');
+      setTimeout(() => {
+        setAnimState('fading-in');
+        setTimeout(() => {
+          setAnimState('idle');
+          isAnimating.current = false;
+        }, 500);
+      }, 1500);
+    }, 300);
+  }, [onExplode]);
+
+  const getAnimationStyle = (): React.CSSProperties => {
+    switch (animState) {
+      case 'exploding':
+        return { animation: 'explode 300ms ease-out forwards' };
+      case 'hidden':
+        return { opacity: 0 };
+      case 'fading-in':
+        return { animation: 'fadeIn 500ms ease-in forwards' };
+      default:
+        return {};
+    }
+  };
+
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center justify-center text-4xl',
+        style.fontClass,
+        animState === 'idle' && 'cursor-pointer'
+      )}
+      aria-hidden='true'
+      style={{
+        color: style.color,
+        transformOrigin: 'center center',
+        pointerEvents: animState !== 'idle' ? 'none' : undefined,
+        contentVisibility: 'auto',
+        containIntrinsicSize: '36px',
+        ...getAnimationStyle()
+      }}
+      onClick={animState === 'idle' ? handleClick : undefined}
+    >
+      {style.char}
+    </span>
+  );
+});
+
+InteractiveChar.displayName = 'InteractiveChar';
+
+// ============================================================================
+// STATIC CHARACTER COMPONENT
+// Simple span with no state - maximum performance for non-interactive mode
+// ============================================================================
+
+interface StaticCharProps {
+  style: CharacterStyle;
+}
+
+const StaticChar = memo(({ style }: StaticCharProps) => (
+  <span
+    className={clsx(
+      'inline-flex items-center justify-center text-4xl motion-safe:animate-pulse',
+      style.fontClass
+    )}
+    aria-hidden='true'
+    style={{
+      color: style.color,
+      animationDelay: style.animationDelay,
+      contentVisibility: 'auto',
+      containIntrinsicSize: '36px'
+    }}
+  >
+    {style.char}
+  </span>
+));
+
+StaticChar.displayName = 'StaticChar';
+
+// ============================================================================
+// MAIN COMPONENT
 // ============================================================================
 
 const Decorations = ({
@@ -212,25 +312,35 @@ const Decorations = ({
   interactive?: boolean;
 }) => {
   const [styles, setStyles] = useState<CharacterStyle[]>([]);
-  const [animStates, setAnimStates] = useState<Map<number, AnimState>>(
-    new Map()
-  );
   const [visibleCount, setVisibleCount] = useState<number>(() =>
     calculateVisibleCount(interactive)
   );
   const { playClick } = useClick();
 
-  // Handle viewport resize
+  // Stable callback for explosion sound - no dependencies on changing state
+  const handleExplode = useCallback(() => {
+    playClick();
+  }, [playClick]);
+
+  // Handle viewport resize with debounce
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+
     const handleResize = () => {
-      const newCount = calculateVisibleCount(interactive);
-      if (newCount !== visibleCount) {
-        setVisibleCount(newCount);
-      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const newCount = calculateVisibleCount(interactive);
+        if (newCount !== visibleCount) {
+          setVisibleCount(newCount);
+        }
+      }, 100); // Debounce 100ms
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
   }, [interactive, visibleCount]);
 
   // Load styles when visible count changes
@@ -248,88 +358,22 @@ const Decorations = ({
     };
   }, [visibleCount, forceShow]);
 
-  // Memoized explosion handler
-  const triggerExplosion = useCallback(
-    (index: number) => {
-      if (animStates.get(index)) return; // Already animating
-      playClick();
-
-      setAnimStates(prev => new Map(prev).set(index, 'exploding'));
-
-      // Animation state transitions
-      setTimeout(() => {
-        setAnimStates(prev => new Map(prev).set(index, 'hidden'));
-        setTimeout(() => {
-          setAnimStates(prev => new Map(prev).set(index, 'fading-in'));
-          setTimeout(() => {
-            setAnimStates(prev => {
-              const next = new Map(prev);
-              next.delete(index);
-              return next;
-            });
-          }, 500);
-        }, 1500);
-      }, 300);
-    },
-    [animStates, playClick]
-  );
-
-  // Memoize the animation style getter
-  const getAnimationStyle = useCallback(
-    (index: number, delay: string): React.CSSProperties => {
-      if (!interactive) {
-        return { animationDelay: delay };
-      }
-      const state = animStates.get(index);
-      switch (state) {
-        case 'exploding':
-          return { animation: 'explode 300ms ease-out forwards' };
-        case 'hidden':
-          return { opacity: 0 };
-        case 'fading-in':
-          return { animation: 'fadeIn 500ms ease-in forwards' };
-        default:
-          return {};
-      }
-    },
-    [interactive, animStates]
-  );
-
-  // Memoize the grid content to prevent unnecessary re-renders
+  // Memoize grid content - now using separate components for interactive vs static
   const gridContent = useMemo(() => {
     if (styles.length === 0) return null;
 
-    return styles.map((style, index) => {
-      const animState = animStates.get(index) ?? 'idle';
-      const isClickable = interactive && animState === 'idle';
-
-      return (
-        <span
-          key={index}
-          className={clsx(
-            'inline-flex items-center justify-center text-4xl',
-            style.fontClass,
-            !interactive && 'motion-safe:animate-pulse',
-            isClickable && 'cursor-pointer'
-          )}
-          aria-hidden='true'
-          style={{
-            color: style.color,
-            transformOrigin: 'center center',
-            pointerEvents:
-              interactive && animState !== 'idle' ? 'none' : undefined,
-            // content-visibility for off-screen paint optimization
-            contentVisibility: 'auto',
-            containIntrinsicSize: '36px',
-            ...getAnimationStyle(index, style.animationDelay)
-          }}
-          onClick={isClickable ? () => triggerExplosion(index) : undefined}
-        >
-          {style.char}
-        </span>
-      );
-    });
-  }, [styles, animStates, interactive, getAnimationStyle, triggerExplosion]);
+    if (interactive) {
+      // Interactive mode: each char manages its own animation state
+      return styles.map((style, index) => (
+        <InteractiveChar key={index} style={style} onExplode={handleExplode} />
+      ));
+    } else {
+      // Static mode: simple spans with no state
+      return styles.map((style, index) => (
+        <StaticChar key={index} style={style} />
+      ));
+    }
+  }, [styles, interactive, handleExplode]);
 
   if (styles.length === 0) return null;
 
