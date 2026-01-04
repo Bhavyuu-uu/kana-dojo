@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Return from '@/shared/components/Game/ReturnFromGame';
 import Pick from './Pick';
 import Input from './Input';
+import WordBuildingGame from './WordBuildingGame';
 import useKanjiStore from '@/features/Kanji/store/useKanjiStore';
 import useStatsStore from '@/features/Progress/store/useStatsStore';
 import { useShallow } from 'zustand/react/shallow';
@@ -42,6 +43,11 @@ const Game = () => {
           selectedKanjiObjs={selectedKanjiObjs}
           isHidden={showStats}
           isReverse={true}
+        />
+      ) : gameMode.toLowerCase() === 'word-building' ? (
+        <WordBuildingGame
+          selectedKanjiObjs={selectedKanjiObjs}
+          isHidden={showStats}
         />
       ) : null}
     </div>
