@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import useKanjiStore, { IKanjiObj } from '@/features/Kanji/store/useKanjiStore';
 import { Random } from 'random-js';
@@ -56,6 +56,34 @@ const tileEntryVariants = {
       stiffness: 350,
       damping: 25,
       mass: 0.8
+    }
+  }
+};
+
+// Duolingo-like slide animation for game content transitions
+const gameContentVariants = {
+  hidden: {
+    opacity: 0,
+    x: 60
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 300,
+      damping: 30,
+      mass: 0.8
+    }
+  },
+  exit: {
+    opacity: 0,
+    x: -60,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 400,
+      damping: 35,
+      mass: 0.6
     }
   }
 };
@@ -512,137 +540,146 @@ const KanjiWordBuildingGame = ({
         isHidden && 'hidden'
       )}
     >
-      {/* Answer Summary - displayed after correct answer */}
-      {displayAnswerSummary && currentKanjiObjForSummary && (
-        <AnswerSummary
-          payload={currentKanjiObjForSummary}
-          setDisplayAnswerSummary={setDisplayAnswerSummary}
-          feedback={feedback}
-          isEmbedded={true}
-        />
-      )}
+      <AnimatePresence mode='wait'>
+        {/* Answer Summary - displayed after correct answer */}
+        {displayAnswerSummary && currentKanjiObjForSummary && (
+          <AnswerSummary
+            payload={currentKanjiObjForSummary}
+            setDisplayAnswerSummary={setDisplayAnswerSummary}
+            feedback={feedback}
+            isEmbedded={true}
+          />
+        )}
 
-      {/* Question Display - shows kanji in normal mode, meaning in reverse mode */}
-      {!displayAnswerSummary && (
-        <div className='flex flex-row items-center gap-1'>
+        {/* Game Content - Question, Answer Row, and Tiles */}
+        {!displayAnswerSummary && (
           <motion.div
-            className='flex flex-row items-center gap-2'
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            key={questionData.kanjiChar}
+            key='game-content'
+            variants={gameContentVariants}
+            initial='hidden'
+            animate='visible'
+            exit='exit'
+            className='flex w-full flex-col items-center gap-6 sm:gap-10'
           >
-            <span
-              className={clsx(
-                isReverse ? 'text-5xl sm:text-6xl' : 'text-8xl sm:text-9xl'
-              )}
-              lang={!isReverse ? 'ja' : undefined}
-            >
-              {!isReverse ? (
-                <FuriganaText
-                  text={questionData.kanjiChar}
-                  reading={getKanjiReading(questionData.kanjiChar)}
-                />
-              ) : (
-                currentKanjiObj?.meanings[0]
-              )}
-            </span>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Answer Row Area - shows placed tiles */}
-      {!displayAnswerSummary && (
-        <div className='flex w-full flex-col items-center'>
-          <div
-            className={clsx(
-              'flex w-full items-center border-b-2 border-[var(--border-color)] px-2 pb-2 md:w-3/4 lg:w-2/3 xl:w-1/2',
-              // Use taller min-height when in reverse mode (kanji tiles have larger font size)
-              isReverse ? 'min-h-[5.5rem]' : 'min-h-[5rem]'
-            )}
-          >
-            <motion.div
-              className='flex flex-row flex-wrap justify-start gap-3'
-              variants={celebrationContainerVariants}
-              initial='idle'
-              animate={isCelebrating ? 'celebrate' : 'idle'}
-            >
-              {/* Render placed tiles in the answer row */}
-              {placedTiles.map(char => (
-                <motion.div
-                  key={`answer-tile-${char}`}
-                  variants={celebrationBounceVariants}
-                  style={{ originY: 1 }}
-                >
-                  <ActiveTile
-                    id={`tile-${char}`}
-                    char={char}
-                    onClick={() => handleTileClick(char)}
-                    isDisabled={isChecking && bottomBarState !== 'wrong'}
-                    isKanji={isReverse}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {/* Available Tiles - 2 rows */}
-      {!displayAnswerSummary &&
-        (() => {
-          const tilesPerRow = 2;
-          const topRowTiles = questionData.allTiles.slice(0, tilesPerRow);
-          const bottomRowTiles = questionData.allTiles.slice(tilesPerRow);
-
-          const renderTile = (char: string) => {
-            const isPlaced = placedTiles.includes(char);
-            const isKanjiTile = isReverse;
-
-            return (
+            {/* Question Display - shows kanji in normal mode, meaning in reverse mode */}
+            <div className='flex flex-row items-center gap-1'>
               <motion.div
-                key={`tile-slot-${char}`}
-                className='relative'
-                variants={tileEntryVariants}
-                style={{ perspective: 1000 }}
+                className='flex flex-row items-center gap-2'
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={questionData.kanjiChar}
               >
-                {/* Blank tile underneath */}
-                <BlankTile char={char} isKanji={isKanjiTile} />
-
-                {/* Active tile on top when NOT placed */}
-                {!isPlaced && (
-                  <div className='absolute inset-0 z-10'>
-                    <ActiveTile
-                      id={`tile-${char}`}
-                      char={char}
-                      onClick={() => handleTileClick(char)}
-                      isDisabled={isChecking && bottomBarState !== 'wrong'}
-                      isKanji={isKanjiTile}
+                <span
+                  className={clsx(
+                    isReverse ? 'text-5xl sm:text-6xl' : 'text-8xl sm:text-9xl'
+                  )}
+                  lang={!isReverse ? 'ja' : undefined}
+                >
+                  {!isReverse ? (
+                    <FuriganaText
+                      text={questionData.kanjiChar}
+                      reading={getKanjiReading(questionData.kanjiChar)}
                     />
-                  </div>
-                )}
+                  ) : (
+                    currentKanjiObj?.meanings[0]
+                  )}
+                </span>
               </motion.div>
-            );
-          };
+            </div>
 
-          return (
-            <motion.div
-              key={questionData.kanjiChar}
-              className='flex flex-col items-center gap-3 sm:gap-4'
-              variants={tileContainerVariants}
-              initial='hidden'
-              animate='visible'
-            >
-              <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
-                {topRowTiles.map(char => renderTile(char))}
-              </motion.div>
-              {bottomRowTiles.length > 0 && (
-                <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
-                  {bottomRowTiles.map(char => renderTile(char))}
+            {/* Answer Row Area - shows placed tiles */}
+            <div className='flex w-full flex-col items-center'>
+              <div
+                className={clsx(
+                  'flex w-full items-center border-b-2 border-[var(--border-color)] px-2 pb-2 md:w-3/4 lg:w-2/3 xl:w-1/2',
+                  // Use taller min-height when in reverse mode (kanji tiles have larger font size)
+                  isReverse ? 'min-h-[5.5rem]' : 'min-h-[5rem]'
+                )}
+              >
+                <motion.div
+                  className='flex flex-row flex-wrap justify-start gap-3'
+                  variants={celebrationContainerVariants}
+                  initial='idle'
+                  animate={isCelebrating ? 'celebrate' : 'idle'}
+                >
+                  {/* Render placed tiles in the answer row */}
+                  {placedTiles.map(char => (
+                    <motion.div
+                      key={`answer-tile-${char}`}
+                      variants={celebrationBounceVariants}
+                      style={{ originY: 1 }}
+                    >
+                      <ActiveTile
+                        id={`tile-${char}`}
+                        char={char}
+                        onClick={() => handleTileClick(char)}
+                        isDisabled={isChecking && bottomBarState !== 'wrong'}
+                        isKanji={isReverse}
+                      />
+                    </motion.div>
+                  ))}
                 </motion.div>
-              )}
-            </motion.div>
-          );
-        })()}
+              </div>
+            </div>
+
+            {/* Available Tiles - 2 rows */}
+            {(() => {
+              const tilesPerRow = 2;
+              const topRowTiles = questionData.allTiles.slice(0, tilesPerRow);
+              const bottomRowTiles = questionData.allTiles.slice(tilesPerRow);
+
+              const renderTile = (char: string) => {
+                const isPlaced = placedTiles.includes(char);
+                const isKanjiTile = isReverse;
+
+                return (
+                  <motion.div
+                    key={`tile-slot-${char}`}
+                    className='relative'
+                    variants={tileEntryVariants}
+                    style={{ perspective: 1000 }}
+                  >
+                    {/* Blank tile underneath */}
+                    <BlankTile char={char} isKanji={isKanjiTile} />
+
+                    {/* Active tile on top when NOT placed */}
+                    {!isPlaced && (
+                      <div className='absolute inset-0 z-10'>
+                        <ActiveTile
+                          id={`tile-${char}`}
+                          char={char}
+                          onClick={() => handleTileClick(char)}
+                          isDisabled={isChecking && bottomBarState !== 'wrong'}
+                          isKanji={isKanjiTile}
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              };
+
+              return (
+                <motion.div
+                  key={questionData.kanjiChar}
+                  className='flex flex-col items-center gap-3 sm:gap-4'
+                  variants={tileContainerVariants}
+                  initial='hidden'
+                  animate='visible'
+                >
+                  <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
+                    {topRowTiles.map(char => renderTile(char))}
+                  </motion.div>
+                  {bottomRowTiles.length > 0 && (
+                    <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
+                      {bottomRowTiles.map(char => renderTile(char))}
+                    </motion.div>
+                  )}
+                </motion.div>
+              );
+            })()}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Stars />
 

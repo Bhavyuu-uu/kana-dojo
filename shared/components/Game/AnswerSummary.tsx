@@ -18,6 +18,36 @@ const springConfig = {
   mass: 0.8
 };
 
+// Duolingo-like slide animation - slides in from right, fades in
+const slideInVariants = {
+  hidden: {
+    opacity: 0,
+    x: 60
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 300,
+      damping: 30,
+      mass: 0.8,
+      staggerChildren: 0.1,
+      delayChildren: 0.05
+    }
+  },
+  exit: {
+    opacity: 0,
+    x: -60,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 400,
+      damping: 35,
+      mass: 0.6
+    }
+  }
+};
+
 // Container variants for staggered children animations
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -246,9 +276,10 @@ const KanjiSummary = ({
   isEmbedded?: boolean;
 }) => (
   <motion.div
-    variants={containerVariants}
+    variants={slideInVariants}
     initial='hidden'
     animate='visible'
+    exit='exit'
     className='flex w-full flex-col items-center justify-start gap-4 py-4 md:w-3/4 lg:w-1/2'
   >
     {!isEmbedded && <FeedbackHeader feedback={feedback} />}
@@ -310,9 +341,10 @@ const VocabSummary = ({
 
   return (
     <motion.div
-      variants={containerVariants}
+      variants={slideInVariants}
       initial='hidden'
       animate='visible'
+      exit='exit'
       className='flex w-full flex-col items-center justify-start gap-4 py-4 md:w-3/4 lg:w-1/2'
     >
       {!isEmbedded && <FeedbackHeader feedback={feedback} />}

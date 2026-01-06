@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { kana } from '@/features/Kana/data/kana';
 import useKanaStore from '@/features/Kana/store/useKanaStore';
@@ -57,6 +57,34 @@ const tileEntryVariants = {
       stiffness: 350,
       damping: 25,
       mass: 0.8
+    }
+  }
+};
+
+// Duolingo-like slide animation for game content transitions
+const gameContentVariants = {
+  hidden: {
+    opacity: 0,
+    x: 60
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 300,
+      damping: 30,
+      mass: 0.8
+    }
+  },
+  exit: {
+    opacity: 0,
+    x: -60,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 400,
+      damping: 35,
+      mass: 0.6
     }
   }
 };
@@ -523,103 +551,112 @@ const WordBuildingGame = ({
     >
       {/* <GameIntel gameMode='word-building' /> */}
 
-      {/* Word Display */}
-      <div className='flex flex-row items-center gap-1'>
-        <motion.p
-          className='text-7xl sm:text-8xl'
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+      <AnimatePresence mode='wait'>
+        <motion.div
           key={wordData.wordChars.join('')}
+          variants={gameContentVariants}
+          initial='hidden'
+          animate='visible'
+          exit='exit'
+          className='flex w-full flex-col items-center gap-6 sm:gap-10'
         >
-          {wordData.wordChars.join('')}
-        </motion.p>
-      </div>
-
-      {/* Answer Row Area */}
-      <div className='flex w-full flex-col items-center'>
-        <div className='flex min-h-[5rem] w-full items-center border-b-2 border-[var(--border-color)] px-2 pb-2 md:w-3/4 lg:w-2/3 xl:w-1/2'>
-          <motion.div
-            className='flex flex-row flex-wrap justify-start gap-3'
-            variants={celebrationContainerVariants}
-            initial='idle'
-            animate={isCelebrating ? 'celebrate' : 'idle'}
-          >
-            {/* Render placed tiles in the answer row */}
-            {placedTiles.map(char => (
-              <motion.div
-                key={`answer-tile-${char}`}
-                variants={celebrationBounceVariants}
-                style={{ originY: 1 }}
-              >
-                <ActiveTile
-                  id={`tile-${char}`}
-                  char={char}
-                  onClick={() => handleTileClick(char)}
-                  isDisabled={isChecking && bottomBarState !== 'wrong'}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Available Tiles - 2 rows on mobile, centered */}
-      {(() => {
-        // Split tiles into 2 rows for mobile (3 per row max)
-        const tilesPerRow = 3;
-        const topRowTiles = wordData.allTiles.slice(0, tilesPerRow);
-        const bottomRowTiles = wordData.allTiles.slice(tilesPerRow);
-
-        const renderTile = (char: string, index: number) => {
-          const isPlaced = placedTiles.includes(char);
-
-          return (
-            <motion.div
-              key={`tile-slot-${char}`}
-              className='relative'
-              variants={tileEntryVariants}
-              style={{ perspective: 1000 }}
+          {/* Word Display */}
+          <div className='flex flex-row items-center gap-1'>
+            <motion.p
+              className='text-7xl sm:text-8xl'
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
             >
-              {/* Blank tile is ALWAYS rendered underneath (z-0) */}
-              <BlankTile char={char} />
+              {wordData.wordChars.join('')}
+            </motion.p>
+          </div>
 
-              {/* Active tile overlays on top (z-10 + absolute) when NOT placed.
-                  This ensures when it animates back here, the blank is already there. */}
-              {!isPlaced && (
-                <div className='absolute inset-0 z-10'>
-                  <ActiveTile
-                    id={`tile-${char}`}
-                    char={char}
-                    onClick={() => handleTileClick(char)}
-                    isDisabled={isChecking && bottomBarState !== 'wrong'}
-                  />
-                </div>
-              )}
-            </motion.div>
-          );
-        };
+          {/* Answer Row Area */}
+          <div className='flex w-full flex-col items-center'>
+            <div className='flex min-h-[5rem] w-full items-center border-b-2 border-[var(--border-color)] px-2 pb-2 md:w-3/4 lg:w-2/3 xl:w-1/2'>
+              <motion.div
+                className='flex flex-row flex-wrap justify-start gap-3'
+                variants={celebrationContainerVariants}
+                initial='idle'
+                animate={isCelebrating ? 'celebrate' : 'idle'}
+              >
+                {/* Render placed tiles in the answer row */}
+                {placedTiles.map(char => (
+                  <motion.div
+                    key={`answer-tile-${char}`}
+                    variants={celebrationBounceVariants}
+                    style={{ originY: 1 }}
+                  >
+                    <ActiveTile
+                      id={`tile-${char}`}
+                      char={char}
+                      onClick={() => handleTileClick(char)}
+                      isDisabled={isChecking && bottomBarState !== 'wrong'}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
 
-        return (
-          <motion.div
-            key={wordData.wordChars.join('')}
-            className='flex flex-col items-center gap-3 sm:gap-4'
-            variants={tileContainerVariants}
-            initial='hidden'
-            animate='visible'
-          >
-            <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
-              {topRowTiles.map((char, i) => renderTile(char, i))}
-            </motion.div>
-            {bottomRowTiles.length > 0 && (
-              <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
-                {bottomRowTiles.map((char, i) =>
-                  renderTile(char, i + tilesPerRow)
+          {/* Available Tiles - 2 rows on mobile, centered */}
+          {(() => {
+            // Split tiles into 2 rows for mobile (3 per row max)
+            const tilesPerRow = 3;
+            const topRowTiles = wordData.allTiles.slice(0, tilesPerRow);
+            const bottomRowTiles = wordData.allTiles.slice(tilesPerRow);
+
+            const renderTile = (char: string, index: number) => {
+              const isPlaced = placedTiles.includes(char);
+
+              return (
+                <motion.div
+                  key={`tile-slot-${char}`}
+                  className='relative'
+                  variants={tileEntryVariants}
+                  style={{ perspective: 1000 }}
+                >
+                  {/* Blank tile is ALWAYS rendered underneath (z-0) */}
+                  <BlankTile char={char} />
+
+                  {/* Active tile overlays on top (z-10 + absolute) when NOT placed.
+                      This ensures when it animates back here, the blank is already there. */}
+                  {!isPlaced && (
+                    <div className='absolute inset-0 z-10'>
+                      <ActiveTile
+                        id={`tile-${char}`}
+                        char={char}
+                        onClick={() => handleTileClick(char)}
+                        isDisabled={isChecking && bottomBarState !== 'wrong'}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            };
+
+            return (
+              <motion.div
+                className='flex flex-col items-center gap-3 sm:gap-4'
+                variants={tileContainerVariants}
+                initial='hidden'
+                animate='visible'
+              >
+                <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
+                  {topRowTiles.map((char, i) => renderTile(char, i))}
+                </motion.div>
+                {bottomRowTiles.length > 0 && (
+                  <motion.div className='flex flex-row justify-center gap-3 sm:gap-4'>
+                    {bottomRowTiles.map((char, i) =>
+                      renderTile(char, i + tilesPerRow)
+                    )}
+                  </motion.div>
                 )}
               </motion.div>
-            )}
-          </motion.div>
-        );
-      })()}
+            );
+          })()}
+        </motion.div>
+      </AnimatePresence>
 
       <Stars />
 
@@ -635,25 +672,6 @@ const WordBuildingGame = ({
         canCheck={canCheck}
         feedbackContent={wordData.answerChars.join('')}
         buttonRef={buttonRef}
-        // secondaryAction={
-        //   !showContinue &&
-        //   !showTryAgain && (
-        //     <ActionButton
-        //       borderBottomThickness={12}
-        //       borderRadius='3xl'
-        //       colorScheme='secondary'
-        //       borderColorScheme='secondary'
-        //       className={clsx(
-        //         'w-full px-4 py-2.5 transition-all duration-150 sm:w-auto sm:px-6 sm:py-3',
-        //         !canCheck && 'cursor-default opacity-60'
-        //       )}
-        //       onClick={handleClearPlaced}
-        //       aria-label='Clear all tiles'
-        //     >
-        //       <Trash2 className='h-8 w-8 fill-current' />
-        //     </ActionButton>
-        //   )
-        // }
       />
 
       {/* Spacer */}
