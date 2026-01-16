@@ -241,6 +241,12 @@ const baseThemeSets: BaseThemeGroup[] = [
     name: 'Dark',
     icon: Moon,
     themes: [
+              {
+        id: 'snow-lantern',
+        backgroundColor: 'oklch(94.0% 0.012 250.0 / 1)',
+        mainColor: 'oklch(50.0% 0.145 30.0 / 1)',
+        secondaryColor: 'oklch(40.0% 0.110 250.0 / 1)'
+},
       {
         id: 'plum-blossom',
         backgroundColor: 'oklch(23.0% 0.042 340.0 / 1)',
