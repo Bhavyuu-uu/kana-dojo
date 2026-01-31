@@ -223,32 +223,20 @@ export default function Gauntlet<T>({ config, onCancel }: GauntletProps<T>) {
     return () => clearInterval(interval);
   }, [phase, startTime]);
 
-  // Generate options when question changes (Pick mode)
+  // Generate options when question changes (always uses Pick/tile mode now)
   useEffect(() => {
-    if (
-      currentQuestion &&
-      gameMode === 'Pick' &&
-      generateOptions &&
-      phase === 'playing'
-    ) {
+    if (currentQuestion && generateOptions && phase === 'playing') {
       const options = generateOptions(
         currentQuestion.item,
         items,
-        3,
+        4,
         isReverseActive,
       );
       const shuffled = [...options].sort(() => random.real(0, 1) - 0.5);
       setShuffledOptions(shuffled);
       setWrongSelectedAnswers([]);
     }
-  }, [
-    currentQuestion,
-    gameMode,
-    generateOptions,
-    items,
-    isReverseActive,
-    phase,
-  ]);
+  }, [currentQuestion, generateOptions, items, isReverseActive, phase]);
 
   // Handle game start
   const handleStart = useCallback(() => {
@@ -284,8 +272,29 @@ export default function Gauntlet<T>({ config, onCancel }: GauntletProps<T>) {
     setUserAnswer('');
     setWrongSelectedAnswers([]);
 
+    // Generate initial options for the first question
+    if (queue.length > 0 && generateOptions) {
+      const firstQuestion = queue[0];
+      const options = generateOptions(
+        firstQuestion.item,
+        items,
+        4,
+        isReverseActive,
+      );
+      const shuffled = [...options].sort(() => random.real(0, 1) - 0.5);
+      setShuffledOptions(shuffled);
+    }
+
     setPhase('playing');
-  }, [items, repetitions, difficulty, generateQuestion, playClick]);
+  }, [
+    items,
+    repetitions,
+    difficulty,
+    generateQuestion,
+    generateOptions,
+    isReverseActive,
+    playClick,
+  ]);
 
   // Get a unique identifier for the current question item
   const getItemId = useCallback((item: T): string => {
@@ -534,6 +543,19 @@ export default function Gauntlet<T>({ config, onCancel }: GauntletProps<T>) {
     }
   }, [playClick, isGauntletRoute, router, dojoType]);
 
+  // Handler for new ActiveGame component - receives selected option and result directly
+  const handleActiveGameSubmit = useCallback(
+    (selectedOption: string, isCorrect: boolean) => {
+      submitAnswer(isCorrect);
+    },
+    [submitAnswer],
+  );
+
+  // Create unique key for current question
+  const questionKey = currentQuestion
+    ? `${getItemId(currentQuestion.item)}-${currentQuestion.index}`
+    : '';
+
   // Auto-start when accessed via route (like Blitz)
   useEffect(() => {
     if (!isGauntletRoute) return;
@@ -589,31 +611,16 @@ export default function Gauntlet<T>({ config, onCancel }: GauntletProps<T>) {
       totalQuestions={totalQuestions}
       lives={lives}
       maxLives={maxLives}
-      difficulty={difficulty}
-      lifeJustGained={lifeJustGained}
-      lifeJustLost={lifeJustLost}
-      elapsedTime={elapsedTime}
       currentQuestion={currentQuestion?.item || null}
       renderQuestion={renderQuestion}
       isReverseActive={isReverseActive ?? false}
-      gameMode={gameMode}
-      inputPlaceholder='Type your answer...'
-      userAnswer={userAnswer}
-      setUserAnswer={setUserAnswer}
-      onSubmit={handleSubmit}
-      getCorrectAnswer={getCorrectAnswer}
       shuffledOptions={shuffledOptions}
-      wrongSelectedAnswers={wrongSelectedAnswers}
-      onPickSubmit={handlePickSubmit}
       renderOption={renderOption}
       items={items}
-      lastAnswerCorrect={lastAnswerCorrect}
-      currentStreak={currentStreak}
-      correctSinceLastRegen={correctSinceLastRegen}
-      regenThreshold={regenThreshold}
-      correctAnswers={correctAnswers}
-      wrongAnswers={wrongAnswers}
+      onSubmit={handleActiveGameSubmit}
+      getCorrectOption={getCorrectOption!}
       onCancel={handleCancel}
+      questionKey={questionKey}
     />
   );
 }
