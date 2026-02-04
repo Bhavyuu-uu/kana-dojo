@@ -594,6 +594,9 @@ npm run test
 # NOTE: Runs a full build (slow). Only run when explicitly requested.
 npm run analyze
 
+# Bundle size regression check (requires a prior build)
+npm run bundle:check
+
 # i18n validation
 npm run i18n:check
 

@@ -26,9 +26,13 @@ const NAMESPACES = [
   'settings',
   'errors',
   'menuInfo',
-  'translator',
   'blog',
-  'conjugator',
+  'translator',
+  'metadata',
+  'practiceLanding',
+  'welcome',
+  'experiments',
+  'legal',
 ];
 
 let hasErrors = false;
