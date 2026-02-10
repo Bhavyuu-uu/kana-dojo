@@ -347,7 +347,8 @@
     "romaji": "Daijoubu, boku saikyou dakara",
     "english": "Relax, I'm the strongest.",
     "anime": "Jujutsu Kaisen",
-    "character": "Satoru Gojo"
+    "character": "Satoru Gojo",
+    "completed": true
   },
   {
     "id": 40,
@@ -355,7 +356,8 @@
     "romaji": "Futsuu no seikatsu ga shitai dake nanda",
     "english": "All I want is to live a normal life.",
     "anime": "Chainsaw Man",
-    "character": "Denji"
+    "character": "Denji",
+    "completed": true
   },
   {
     "id": 41,
@@ -363,7 +365,8 @@
     "romaji": "Tsuki ni kawatte oshioki yo!",
     "english": "In the name of the moon, I'll punish you!",
     "anime": "Sailor Moon",
-    "character": "Usagi Tsukino"
+    "character": "Usagi Tsukino",
+    "completed": true
   },
   {
     "id": 42,
@@ -371,7 +374,8 @@
     "romaji": "Ore wa shumi de hiiroo o yatte iru mono da",
     "english": "I'm just a hero for fun.",
     "anime": "One Punch Man",
-    "character": "Saitama"
+    "character": "Saitama",
+    "completed": true
   },
   {
     "id": 43,
@@ -379,7 +383,8 @@
     "romaji": "Mamoru mono ga aru kagiri, ore wa makenai",
     "english": "As long as I have something to protect, I won't lose.",
     "anime": "Bleach",
-    "character": "Ichigo Kurosaki"
+    "character": "Ichigo Kurosaki",
+    "completed": true
   },
   {
     "id": 44,
@@ -387,7 +392,8 @@
     "romaji": "Boku wa shin sekai no kami to naru",
     "english": "I will become the god of the new world.",
     "anime": "Death Note",
-    "character": "Light Yagami"
+    "character": "Light Yagami",
+    "completed": true
   },
   {
     "id": 45,
@@ -395,7 +401,8 @@
     "romaji": "Utte ii no wa uterareru kakugo ga aru yatsu dake da",
     "english": "Only those prepared to be shot should pull the trigger.",
     "anime": "Code Geass: Lelouch of the Rebellion",
-    "character": "Lelouch vi Britannia"
+    "character": "Lelouch vi Britannia",
+    "issued": true
   },
   {
     "id": 46,
