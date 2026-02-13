@@ -64,7 +64,6 @@ const WelcomeModal = () => {
 
   const [localTheme, setLocalTheme] = useState(selectedTheme);
   const [localFont, setLocalFont] = useState(currentFont);
-  const [hoveredTheme, setHoveredTheme] = useState<string | null>(null);
   const recommendedFonts = useMemo(
     () => fonts.filter(fontObj => isRecommendedFont(fontObj.name)),
     [],
@@ -448,7 +447,6 @@ const WelcomeModal = () => {
                         {filteredThemes.map(theme => {
                           const isChaosTheme = theme.id === '?';
                           const isPremiumTheme = isPremiumThemeId(theme.id);
-                          const isHovered = hoveredTheme === theme.id;
 
                           // Get wallpaper for premium themes
                           const themeWallpaperId = getThemeDefaultWallpaperId(
@@ -461,14 +459,12 @@ const WelcomeModal = () => {
                           // Determine background
                           const background = isChaosTheme
                             ? CHAOS_THEME_GRADIENT
-                            : isPremiumTheme && isHovered
-                              ? theme.cardColor
-                              : theme.backgroundColor;
+                            : theme.backgroundColor;
 
                           const wallpaperStyles = wallpaper
                             ? getWallpaperStyles(
                                 wallpaper.url,
-                                isHovered,
+                                false,
                                 wallpaper.urlWebp,
                               )
                             : {};
@@ -476,7 +472,7 @@ const WelcomeModal = () => {
                           return (
                             <button
                               key={theme.id}
-                              className='w-full cursor-pointer rounded-lg p-3 transition-all duration-100 hover:opacity-90'
+                              className='w-full cursor-pointer rounded-lg p-3'
                               style={{
                                 ...(wallpaper
                                   ? wallpaperStyles
@@ -486,8 +482,6 @@ const WelcomeModal = () => {
                                     ? `3px solid ${theme.secondaryColor}`
                                     : 'none',
                               }}
-                              onMouseEnter={() => setHoveredTheme(theme.id)}
-                              onMouseLeave={() => setHoveredTheme(null)}
                               onClick={() => {
                                 playClick();
                                 setLocalTheme(theme.id);
