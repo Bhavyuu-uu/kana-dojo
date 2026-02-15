@@ -5,7 +5,7 @@ import clsx from 'clsx';
 import { Trophy } from 'lucide-react';
 import type { CSSProperties } from 'react';
 
-const USE_HALO_STAT_CARD_DESIGN = false;
+const USE_HALO_STAT_CARD_DESIGN = true;
 
 interface StatCardProps {
   value: number;
@@ -25,7 +25,7 @@ const StatCard = ({ value, label, index, haloGap }: StatCardProps) => (
     className={clsx(
       USE_HALO_STAT_CARD_DESIGN
         ? 'rounded-(--stat-card-outer-radius) border-4 border-(--border-color) p-(--stat-card-halo-gap)'
-        : 'border border-(--border-color) p-6 text-center rounded-xl bg-(--main-color)',
+        : 'rounded-xl border border-(--border-color) bg-(--main-color) p-6 text-center',
     )}
     style={
       USE_HALO_STAT_CARD_DESIGN
